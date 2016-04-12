@@ -1,0 +1,23 @@
+<link rel="stylesheet" type="text/css" href="http://www.racingblog.de/wordpress/wp-content/uploads/dd/dd.css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.12/d3.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js"></script>
+<script type="text/javascript" src="http://www.racingblog.de/wordpress/wp-content/uploads/dd/datadriven-libs.js"></script>
+<script type="text/javascript" src="http://www.racingblog.de/wordpress/wp-content/uploads/dd/datadriven-charts.js"></script>
+
+<strong>Qualifikation</strong>
+<div id="qualy" class="svg-wrap"></div>
+
+<strong>Lap Chart</strong>
+<div id="lapchart" class="svg-wrap"></div>
+
+<script>// <![CDATA[
+document.addEventListener("DOMContentLoaded", function(event) { 
+  var path = "http://www.racingblog.de/wordpress/wp-content/uploads/dd/<%= data_src %>"
+  //var path = "<%= data_src %>"
+  d3.json(path, function(error, all_data) {
+    if (error) return console.warn(error)
+    DataDriven.laps(all_data)
+    DataDriven.qualy(all_data)
+  })
+});
+// ]]></script>

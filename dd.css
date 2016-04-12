@@ -1,0 +1,112 @@
+#post-entry article.post-single {
+  padding: 2% 2% !important;
+  width: 95% !important;
+}
+
+.svg-wrap {
+  width: 100%;
+}
+text {
+  font: 9px sans-serif;
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+}
+.axis line,
+.axis path {
+  fill: none;
+  stroke: #ddd;
+  shape-rendering: crispEdges;
+}
+.y.axis .domain {
+  display: none;
+}
+div.tooltip {
+  top: -1000px;
+  position: absolute;
+  padding: 10px;
+  background: rgba(255, 255, 255, .90);
+  border: 1px solid lightgray;
+  pointer-events: none;
+}
+.tooltip-hidden{
+  opacity: 0;
+}
+g.tooltip {
+  display: block;
+}
+g.tooltip text {
+  font: 14px sans-serif;
+}
+.qpath {
+  cursor: pointer;
+  stroke-width: 2px;
+  stroke-linecap: round;
+}
+.label {
+  pointer-events: none;
+}
+text.label {
+  cursor: pointer;
+  fill: #aaa;
+}
+.line {
+  cursor: pointer;
+  opacity: 1.0;
+  stroke: #aaa;
+  stroke-width: 2;
+}
+.line:hover {
+  opacity: 1.0;
+  stroke: #a00;
+}
+.line.selected {
+  opacity: 1.0;
+  stroke: #a00;
+  stroke-width: 5;
+}
+
+.tick line {
+  opacity: 1;
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.tickLine.zoom {
+  stroke: #999;
+  stroke-width: 0.3;
+}
+
+text.lap {
+  font-size: 7px;
+  fill: #999;
+}
+
+text.label.pole,
+text.label.flag,
+text.label.marker {
+  font-size: 7px;
+  pointer-events: inherit;
+  /* text-shadow: none; */
+}
+
+text.label.marker {
+  font-size: 5px;
+  font-weight: bold;
+  fill: #111;
+}
+
+path.placing {
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+}
+
+path.marker,
+circle.marker {
+  fill: #fff;
+  stroke-width: 2px;
+}
+
+rect.safety {
+  fill: #ff0;
+}

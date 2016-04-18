@@ -121,7 +121,7 @@ defmodule Data do
 
 
   def getJSON(url) do
-    {:ok, %HTTPoison.Response{status_code: 200, body: body}} = HTTPoison.get(url, [], [recv_timeout: 60000, timeout: 60000])
+    {:ok, %HTTPoison.Response{status_code: 200, body: body}} = HTTPoison.get(url, [], [recv_timeout: 3600000, timeout: 3600000])
     Poison.Parser.parse! body
   end
 
@@ -132,10 +132,10 @@ defmodule Data do
         constructor: &1["Constructor"]["constructorId"],
         name: [&1["Driver"]["givenName"], &1["Driver"]["familyName"]] |> Enum.join(" "),
         last_name: &1["Driver"]["familyName"],
-        time: [strtosecs(&1["Q1"]), strtosecs(&1["Q2"]), strtosecs(&1["Q3"])] |> Enum.filter(fn(x)-> x != nil end),
         q1: strtosecs(&1["Q1"]),
         q2: strtosecs(&1["Q2"]),
         q3: strtosecs(&1["Q3"]),
+        time: [strtosecs(&1["Q1"]), strtosecs(&1["Q2"]), strtosecs(&1["Q3"])] |> Enum.filter(fn(x)-> x != nil end),
       }
     ))
   end
@@ -184,6 +184,9 @@ defmodule Data do
   # end
 
   def strtosecs(nil) do
+    nil
+  end
+  def strtosecs("") do
     nil
   end
   def strtosecs(str) do

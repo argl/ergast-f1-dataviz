@@ -23,8 +23,8 @@ window.DataDriven.qualy = function(all_data) {
   var driver_count = data.length
   
   c.y.domain([
-    d3.min(data, function(d) { return d.q3 ? Math.floor(d.q3) : 99999 }), 
-    d3.max(data, function(d) { return d.q1 ? Math.ceil(d.q1) : 0 })
+    d3.min(data, function(d) { return Math.floor(Math.min(d.q1 || 99999, d.q2 || 99999, d.q3 || 99999)) }), 
+    d3.max(data, function(d) { return Math.ceil(Math.max(d.q1 || 0, d.q2 || 0, d.q3 || 0)) })
   ])
 
   c.yAxis.tickFormat(function(d) { return "" + d + "s" })

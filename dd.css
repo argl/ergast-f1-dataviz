@@ -3,6 +3,10 @@
   width: 95% !important;
 }
 
+svg {
+  width: 100%;
+}
+
 .svg-wrap {
   width: 100%;
 }

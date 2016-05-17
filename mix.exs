@@ -34,7 +34,8 @@ defmodule Data.Mixfile do
   defp deps do
     [
       {:httpoison, "~> 0.8.0"},
-      {:poison, "~> 2.1"}
+      {:poison, "~> 2.1"},
+      {:floki, "~> 0.8"}
     ]
   end
 end

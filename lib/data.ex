@@ -18,22 +18,27 @@ defmodule Data do
 
 
   def process([type: "all", year: year, round: round]) do
-    # get race results
-    results = with_cached_file "dd-#{year}-#{round}-results.json", fn() -> get_results(year, round) end
-    laps = with_cached_file "dd-#{year}-#{round}-laps.json", fn() -> get_laps(year, round) end
-    pitstops = with_cached_file "dd-#{year}-#{round}-pitstops.json", fn() -> get_pitstops(year, round) end
-    drivers = with_cached_file "dd-#{year}-#{round}-drivers.json", fn() -> get_drivers(year) end
-    constructors = with_cached_file "dd-#{year}-constructors.json", fn() -> get_constructors(year) end
+    get_tire_data(year, round)
 
-    data_filename = "dd-f1-#{year}-#{round}.json"
-    chart_data = DataConverter.convert_data(results, laps, pitstops, drivers)
+    # get tire data:
+    # tire_data = with_cached_file "dd-#{year}-#{round}-tires.json", fn() -> get_tire_data(year, round) end
 
-    qdata = get_qualy_results(year, round)
+    # # get race results
+    # results = with_cached_file "dd-#{year}-#{round}-results.json", fn() -> get_results(year, round) end
+    # laps = with_cached_file "dd-#{year}-#{round}-laps.json", fn() -> get_laps(year, round) end
+    # pitstops = with_cached_file "dd-#{year}-#{round}-pitstops.json", fn() -> get_pitstops(year, round) end
+    # drivers = with_cached_file "dd-#{year}-#{round}-drivers.json", fn() -> get_drivers(year) end
+    # constructors = with_cached_file "dd-#{year}-constructors.json", fn() -> get_constructors(year) end
 
-    File.write(data_filename, Poison.encode!(%{chart_data: chart_data, qdata: qdata, constructors: constructors}), [:binary])
-    File.write("dd-f1-#{year}-#{round}.html", EEx.eval_file("laps.html.eex", [year: year, round: round, data_src: data_filename]))
-    #File.write("dd-f1-qualy-#{year}-#{round}.html", EEx.eval_file("qualy.html.eex", [year: year, round: round, data_src: data_filename]))
+    # data_filename = "dd-f1-#{year}-#{round}.json"
+    # chart_data = DataConverter.convert_data(results, laps, pitstops, drivers)
+
+    # qdata = get_qualy_results(year, round)
+
+    # File.write(data_filename, Poison.encode!(%{chart_data: chart_data, qdata: qdata, constructors: constructors}), [:binary])
+    # File.write("dd-f1-#{year}-#{round}.html", EEx.eval_file("laps.html.eex", [year: year, round: round, data_src: data_filename]))
   end
+
 
   def with_cached_file(filepath, func) do
     case File.exists? filepath do
@@ -47,6 +52,33 @@ defmodule Data do
         IO.puts "Getting data from file #{filepath}"
         Poison.decode!(File.read!(filepath))
     end
+  end
+
+  def get_tire_data(year, round) do
+    url = "http://www.motorsport-total.com/f1/ergeb/#{year}/#{round |> String.rjust(2, ?0)}/75ts.shtml"
+    IO.inspect url
+    html = get_html(url)
+    table = hd(Floki.find(html, "table.table1"))
+    # IO.inspect table
+    {"table", _attributes, children} = table
+    # IO.inspect children
+
+    Floki.find(html, "table.table1 tr") 
+    |> Enum.filter(fn(node) ->  
+      case node do
+        # manufacturer row
+        {"tr", _, [{"td", [{"colspan", "7"} | _], _} | _]} -> false
+        # header row
+        {"tr", _, [{"th", _, _} | _]} -> false
+        # interesting row
+        {"tr", _, _} -> true
+        # anything else
+        _ -> false
+      end
+    end)
+    |> IO.inspect
+
+    %{}
   end
 
   def get_results(year, round) do
@@ -119,6 +151,10 @@ defmodule Data do
     end
   end
 
+  def get_html(url) do
+    {:ok, %HTTPoison.Response{status_code: 200, body: body}} = HTTPoison.get(url, [], [recv_timeout: 3600000, timeout: 3600000])
+    body
+  end
 
   def getJSON(url) do
     {:ok, %HTTPoison.Response{status_code: 200, body: body}} = HTTPoison.get(url, [], [recv_timeout: 3600000, timeout: 3600000])

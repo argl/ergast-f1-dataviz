@@ -18,25 +18,25 @@ defmodule Data do
 
 
   def process([type: "all", year: year, round: round]) do
-    get_tire_data(year, round)
+    #get_tire_data(year, round)
 
     # get tire data:
-    # tire_data = with_cached_file "dd-#{year}-#{round}-tires.json", fn() -> get_tire_data(year, round) end
+    tire_data = with_cached_file "dd-#{year}-#{round}-tires.json", fn() -> get_tire_data(year, round) end
 
-    # # get race results
-    # results = with_cached_file "dd-#{year}-#{round}-results.json", fn() -> get_results(year, round) end
-    # laps = with_cached_file "dd-#{year}-#{round}-laps.json", fn() -> get_laps(year, round) end
-    # pitstops = with_cached_file "dd-#{year}-#{round}-pitstops.json", fn() -> get_pitstops(year, round) end
-    # drivers = with_cached_file "dd-#{year}-#{round}-drivers.json", fn() -> get_drivers(year) end
-    # constructors = with_cached_file "dd-#{year}-constructors.json", fn() -> get_constructors(year) end
+    # get race results
+    results = with_cached_file "dd-#{year}-#{round}-results.json", fn() -> get_results(year, round) end
+    laps = with_cached_file "dd-#{year}-#{round}-laps.json", fn() -> get_laps(year, round) end
+    pitstops = with_cached_file "dd-#{year}-#{round}-pitstops.json", fn() -> get_pitstops(year, round) end
+    drivers = with_cached_file "dd-#{year}-#{round}-drivers.json", fn() -> get_drivers(year) end
+    constructors = with_cached_file "dd-#{year}-constructors.json", fn() -> get_constructors(year) end
 
-    # data_filename = "dd-f1-#{year}-#{round}.json"
-    # chart_data = DataConverter.convert_data(results, laps, pitstops, drivers)
+    data_filename = "dd-f1-#{year}-#{round}.json"
+    chart_data = DataConverter.convert_data(results, laps, pitstops, drivers)
 
-    # qdata = get_qualy_results(year, round)
+    qdata = get_qualy_results(year, round)
 
-    # File.write(data_filename, Poison.encode!(%{chart_data: chart_data, qdata: qdata, constructors: constructors}), [:binary])
-    # File.write("dd-f1-#{year}-#{round}.html", EEx.eval_file("laps.html.eex", [year: year, round: round, data_src: data_filename]))
+    File.write(data_filename, Poison.encode!(%{chart_data: chart_data, qdata: qdata, constructors: constructors, tire_data: tire_data}), [:binary])
+    File.write("dd-f1-#{year}-#{round}.html", EEx.eval_file("laps.html.eex", [year: year, round: round, data_src: data_filename]))
   end
 
 
@@ -76,9 +76,34 @@ defmodule Data do
         _ -> false
       end
     end)
-    |> IO.inspect
+    |> Enum.reduce(%{}, fn(tr, map) ->       
+      {"tr", _, tds} = tr
+      [first_td | tds] = tds
+      case first_td do
+        {"td", _, [{"a", _, [driver_name]}]} -> 
 
-    %{}
+          tires = Enum.map(tds, fn(td) -> 
+            {"td", _, [x]} = td
+            x = Regex.replace(~r/ ?\(DNF\)/, x, "")
+            x = Map.get(%{
+              "SW" => "SS",
+              "W" => "S",
+              "M" => "M",
+              "H" => "H",
+              "I" => "I",
+              "R" => "R",
+              " " => nil,
+              "" => nil
+            }, x)
+          end) |> Enum.filter(&(&1 != nil))
+
+          driver_name = :unicode.characters_to_binary(driver_name, :latin1, :utf8)
+          driver_name = Regex.replace(~r/^.\. +/, driver_name, "")
+          Map.put map, driver_name, tires
+        _ -> map
+      end
+    end)
+    |> IO.inspect
   end
 
   def get_results(year, round) do

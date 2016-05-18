@@ -35,23 +35,55 @@ defmodule Data do
 
     qdata = get_qualy_results(year, round)
 
-    File.write(data_filename, Poison.encode!(%{chart_data: chart_data, qdata: qdata, constructors: constructors, tire_data: tire_data}), [:binary])
+    strategy = get_strategy(drivers, pitstops, tire_data, results)
+
+    File.write(data_filename, Poison.encode!(%{chart_data: chart_data, qdata: qdata, constructors: constructors, strategy: strategy}), [:binary])
     File.write("dd-f1-#{year}-#{round}.html", EEx.eval_file("laps.html.eex", [year: year, round: round, data_src: data_filename]))
   end
 
 
-  def with_cached_file(filepath, func) do
-    case File.exists? filepath do
-      false ->
-        IO.puts "Getting data..."
-        data = func.()
-        IO.puts "Putting data to file #{filepath}"
-        File.write!(filepath, Poison.encode!(data), [:binary])
-        data
-      true ->
-        IO.puts "Getting data from file #{filepath}"
-        Poison.decode!(File.read!(filepath))
-    end
+  def get_strategy(drivers, pitstops, tire_data, results) do
+    tire_data 
+    # create a map of 
+    # %{"wehrlein": [%{"tire": "S", "from_lap": 0}, %{"tire": "M","from_lap": 11}]}
+    |> Enum.reduce(%{}, fn {driver, tires}, acc -> 
+      {ps, _} = Enum.map_reduce(tires, 0, fn(t, idx) -> 
+        {%{from_lap: find_nth_pitstop_lap(driver, pitstops, idx), tire: t}, idx + 1}
+      end)
+      Map.put acc, driver, ps
+    end)
+    # put number of laps to last entry as :to_lap
+    |> Enum.reduce(%{}, fn {driver, data}, acc -> 
+      result = Enum.find(results, fn(r) -> 
+        r["Driver"]["driverId"] == driver
+      end)
+      [last | rest] = Enum.reverse(data)
+      last = Map.put(last, :to_lap, result["laps"])
+      data = [last | rest] |> Enum.reverse
+      Map.put acc, driver, data
+    end)
+    # insert :to_laps for the rest of the entry
+    |> Enum.reduce(%{}, fn {driver, data}, acc -> 
+      {data, _} = data |> Enum.reverse |> Enum.map_reduce(0, fn(d, acc) -> 
+        case Map.get d, :to_lap do
+          nil -> {Map.put(d, :to_lap, acc), d.from_lap}
+          _ -> {d, d.from_lap}
+        end
+      end)
+      Map.put acc, driver, Enum.reverse(data)
+    end)
+    |> IO.inspect
+  end
+
+  def find_nth_pitstop_lap(driver, pitstops, 0) do
+    0
+  end
+  def find_nth_pitstop_lap(driver, pitstops, nth) do
+    ps = Enum.find(pitstops, fn(ps) -> 
+      Map.get(ps, "driverId") == driver && Map.get(ps, "stop") == "#{nth}" 
+    end)
+    {lap, _} = Integer.parse Map.get(ps, "lap")
+    lap
   end
 
   def get_tire_data(year, round) do
@@ -99,6 +131,33 @@ defmodule Data do
 
           driver_name = :unicode.characters_to_binary(driver_name, :latin1, :utf8)
           driver_name = Regex.replace(~r/^.\. +/, driver_name, "")
+          driver_map = %{
+            "Alonso" => "alonso",
+            "Bottas" => "bottas",
+            "Button" => "button",
+            "Ericsson" => "ericsson",
+            "Grosjean" => "grosjean",
+            "Gutierrez" => "gutierrez",
+            "Hamilton" => "hamilton",
+            "Haryanto" => "haryanto",
+            "Hülkenberg" => "hulkenberg",
+            "Kwjat" => "kvyat",
+            "Magnussen" => "kevin_magnussen",
+            "Massa" => "massa",
+            "Nasr" => "nasr",
+            "Palmer" => "jolyon_palmer",
+            "Perez" => "perez",
+            "Räikkönen" => "raikkonen",
+            "Ricciardo" => "ricciardo",
+            "Rosberg" => "rosberg",
+            "Sainz" => "sainz",
+            "Vandoorne" => "vandoorne",
+            "Verstappen" => "max_verstappen",
+            "Vettel" => "vettel",
+            "Wehrlein" => "wehrlein"
+          }
+          driver_name = Map.get(driver_map, driver_name, driver_name)
+
           Map.put map, driver_name, tires
         _ -> map
       end
@@ -132,6 +191,19 @@ defmodule Data do
     parsed["MRData"]["DriverTable"]["Drivers"]
   end
 
+  def with_cached_file(filepath, func) do
+    case File.exists? filepath do
+      false ->
+        IO.puts "Getting data..."
+        data = func.()
+        IO.puts "Putting data to file #{filepath}"
+        File.write!(filepath, Poison.encode!(data), [:binary])
+        data
+      true ->
+        IO.puts "Getting data from file #{filepath}"
+        Poison.decode!(File.read!(filepath))
+    end
+  end
 
 
 

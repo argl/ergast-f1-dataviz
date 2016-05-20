@@ -476,3 +476,280 @@ window.DataDriven.laps = function(all_data) {
   addMarkers(vis, data.accident, "accident", "A", "triangle");
   addMarkers(vis, data.disqualified, "disqualified", "D", "triangle");
 }
+
+window.DataDriven.strategy = function(all_data) {
+  const SCALES = {}
+
+  var zoomed = false
+  var config
+
+  function configureScales(data) {
+    SCALES.x = d3.scale.linear()
+      .domain([0, data.lap_count])
+      .range([config.margin.left, config.width - config.margin.right]);
+    SCALES.y = d3.scale.linear()
+      .domain([0, data.laps.length - 1])
+      .range([config.margin.top, config.height - config.margin.bottom - config.margin.top]);
+    SCALES.tyreColors = {
+      'US': '#D70AD5', 
+      'SS': '#F20704', 
+      'S': '#FACA08', 
+      'M': '#FFFFFF', 
+      'H': '#FE6F29', 
+      'I': '#029405', 
+      'W': '#078CD1'
+    }
+  }
+
+  function addLegend(vis) {
+    var g = vis.append('svg:g')
+      .attr('class', 'strategy-legend')
+      .selectAll('.strategy-lgdetail')
+      .data([
+        {name: "Ultrasoft", color: "#D70AD5"},
+        {name: "Supersoft", color: "#F20704"},
+        {name: "Soft", color: "#FACA08"},
+        {name: "Medium", color: "#FFFFFF"},
+        {name: "Hard", color: "#FE6F29"},
+        {name: "Intermediate", color: "#029405"},
+        {name: "Wet", color: "#078CD1"},
+      ])
+      .enter()
+      .append('svg:g')
+      .attr('class', 'strategy-lgdetail')
+      .attr("transform", function(d, idx) {
+        return "translate(0, " + (config.height - config.margin.bottom + 5) + ")"
+      })
+
+    g.append('svg:rect')
+      .attr('x', function(d, idx) {
+        return SCALES.x(idx * 8)
+      })
+      .attr('y', 0)
+      .attr('width', '60')
+      .attr('height', '15')
+      .style('fill', function(d) {
+        return d.color
+      })
+      .style({
+        'stroke': '#999999',
+        'stroke-width': '0.5px'
+      })
+
+    g.append('svg:text')
+      .attr('class', 'strategy-legend-text')
+      .attr('x', function(d, idx) {
+        return SCALES.x(idx * 8) + 30
+      })
+      .attr('dy', '11px')
+      .style({
+        'text-shadow': 'none',
+        'text-anchor': 'middle',
+      })
+      .text(function(d) {
+        return d.name
+      })
+    return g
+
+  }
+
+  function addDriverLabels(vis, laps, cssClass, x, textAnchor) {
+    return vis.selectAll('text.label.' + cssClass)
+      .data(laps)
+      .enter()
+      .append('svg:text')
+      .attr('class', 'label ' + cssClass)
+      .attr('x', x)
+      .attr('dy', '0.35em')
+      .attr('text-anchor', textAnchor)
+      .text(function(d) {
+          return d.driver.code
+      })
+      .style('fill', function(d) {
+        return '#000'
+      })
+  }
+
+  function addLapTickLines(vis, lapCount) {
+    vis.selectAll('line.tickLine')
+      .data(SCALES.x.ticks(lapCount))
+      .enter().append('svg:line')
+      .attr('class', 'tickLine zoom')
+      .attr('x1', function(d) {
+        return SCALES.x(d + 0.5);
+      })
+      .attr('x2', function(d) {
+        return SCALES.x(d + 0.5);
+      })
+      .attr('y1', SCALES.y.range()[0] - config.tick_mark_length)
+      .attr('y2', SCALES.y.range()[1] + config.tick_mark_length)
+      .attr('visibility', function(d) {
+        return d <= lapCount ? 'visible' : 'hidden'
+      });
+  }
+
+  function addLappedElement(vis, data) {
+    if (data != undefined) {
+      var width = SCALES.x(1) - SCALES.x(0);
+      vis.selectAll('rect.lapped')
+        .data(data)
+        .enter()
+        .append('svg:rect')
+        .attr('class', 'lapped zoom')
+        .attr('x', function(d, i) {
+            return SCALES.x(i + 0.5);
+        })
+        .attr('y', function(d) {
+            return SCALES.y(d > 0 ? d - 1.5 : 0);
+        })
+        .attr('height', function(d) {
+            return d > 0 ? SCALES.y.range()[1] - SCALES.y(d - 1.5) : 0;
+        })
+        .attr('width', function(d) {
+            return d > 0 ? width : 0;
+        });
+    }
+  }
+
+  function addSafetyElement(vis, data) {
+    if (data != undefined) {
+      var y = SCALES.y.range()[0];
+      var height = SCALES.y.range()[1] - y;
+      var width = SCALES.x(1) - SCALES.x(0);
+      vis.selectAll('rect.safety')
+        .data(data)
+        .enter()
+        .append('svg:rect')
+        .attr('class', 'safety zoom')
+        .attr('x', function(d) {
+            return SCALES.x(d - 0.5);
+        })
+        .attr('y', function() {
+            return y;
+        })
+        .attr('height', function() {
+            return height;
+        })
+        .attr('width', function() {
+            return width;
+        });
+    }
+  }
+
+  function addLapLabels(vis, data, y, dy, cssClass) {
+    vis.selectAll('text.lap.' + cssClass)
+      .data(SCALES.x.ticks(data))
+      .enter().append('svg:text')
+      .attr('class', 'lap ' + cssClass + ' zoom')
+      .attr('x', function(d) {
+        return SCALES.x(d)
+      })
+      .attr('y', y)
+      .attr('dy', dy)
+      .attr('text-anchor', 'middle')
+      .text(function(d, i) {
+        return i > 0 ? i : ''
+      })
+  }
+
+  function addTyreBars(vis, all_data) {
+    vis.selectAll('.strategy-g')
+      .data(all_data.chart_data.laps)
+      .enter()
+      .append("svg:g")
+      .attr('class', 'strategy-g')
+      .selectAll('line.strategy')
+        .data(function(d, idx) {
+          var data = all_data.strategy[d.driver.driverId]
+          data = data.map(function(o){ 
+            o.idx = idx
+            return o
+          });
+          return data
+        })
+        .enter()
+        .append('svg:line')
+        .attr('class', 'strategy')
+        .attr('x1', function(d) {
+          return SCALES.x(d.from_lap) + 2
+        })
+        .attr('x2', function(d) {
+          return SCALES.x(d.to_lap) - 2
+        })
+        .attr('y1', function(d) {
+          return SCALES.y(d.idx) // SCALES.y.range()[idx / all_data.chart_data.lap_count] - config.tick_mark_length
+        })
+        .attr('y2', function(d) {
+          return SCALES.y(d.idx)
+        })
+        .style('stroke', function(d) {
+          return SCALES.tyreColors[d.tire];
+        })
+        .style('stroke-width', "10px")
+  }
+
+  // heres for the main fun
+
+  var data = all_data.chart_data
+
+  config = d3.conventions({
+    parentSel: d3.select("#strategy"),
+    height: 400,
+    width: 700,
+    margin: {top: 20, right: 40, bottom: 50, left: 40},
+    tick_mark_length: 8,
+    marker_radius: 5,
+    transitionduration: 1000,
+    dimmed_opacity: 0.2,
+    highlight_opacity: 1.0,
+    zoom_peak: 6.0,
+    zoom_shoulder: 3.0,
+  })
+  configureScales(data)
+
+  var vis = d3.select('#strategy svg')
+    .attr("class", "lap-svg")
+    .attr('viewBox', "0 0 "+ (config.width) + " " + (config.height) + "")
+    .attr("width", null)
+    .attr("height", null)
+    .style("min-height", "400px")
+  // grey background 
+  vis.append('svg:rect')
+    .attr('class', 'background')
+    .attr('x', SCALES.x(-0.2))
+    .attr('y', config.margin.top - 10)
+
+    .attr('width', SCALES.x(data.lap_count+1) - SCALES.x(0))
+    .attr('height', config.height - config.margin.top - config.margin.bottom)
+    .style('opacity', 1.0)
+    .style('fill', "#F2F2F2")
+    .style('pointer-events', 'none')
+
+  // these are ususally empty since there is no data in ergast
+  addSafetyElement(vis, data.safety)
+  addLappedElement(vis, data.lapped)
+
+  // vertical lap lines
+  addLapTickLines(vis, data.lap_count)
+
+  // Lap labels
+  addLapLabels(vis, data.lap_count, SCALES.y.range()[0] - config.margin.top, '1em', 'top')
+  addLapLabels(vis, data.lap_count, SCALES.y.range()[1], '3em', 'bottom')
+
+  // driver labels on start
+
+  addDriverLabels(vis, data.laps, 'pole', SCALES.x(0) - 7 , 'end')
+    .attr('y', function (d, i) {
+      return SCALES.y(i)
+    });
+
+  addDriverLabels(vis, data.laps, 'flag', SCALES.x(data.lap_count) + 14, 'start')
+    .attr('y', function (d, i) {
+      return SCALES.y(i)
+    });
+
+  addTyreBars(vis, all_data)
+
+  addLegend(vis)
+
+}

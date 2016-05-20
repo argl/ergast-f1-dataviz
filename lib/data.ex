@@ -58,7 +58,8 @@ defmodule Data do
         r["Driver"]["driverId"] == driver
       end)
       [last | rest] = Enum.reverse(data)
-      last = Map.put(last, :to_lap, result["laps"])
+      {lap, _} = Integer.parse(result["laps"])
+      last = Map.put(last, :to_lap, lap)
       data = [last | rest] |> Enum.reverse
       Map.put acc, driver, data
     end)
@@ -72,7 +73,7 @@ defmodule Data do
       end)
       Map.put acc, driver, Enum.reverse(data)
     end)
-    |> IO.inspect
+    #|> IO.inspect
   end
 
   def find_nth_pitstop_lap(driver, pitstops, 0) do
@@ -123,7 +124,7 @@ defmodule Data do
               "M" => "M",
               "H" => "H",
               "I" => "I",
-              "R" => "R",
+              "R" => "W",
               " " => nil,
               "" => nil
             }, x)

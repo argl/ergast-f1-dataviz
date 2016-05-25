@@ -722,7 +722,7 @@ window.DataDriven.strategy = function(all_data) {
     .attr('width', SCALES.x(data.lap_count+1) - SCALES.x(0))
     .attr('height', config.height - config.margin.top - config.margin.bottom)
     .style('opacity', 1.0)
-    .style('fill', "#F2F2F2")
+    .style('fill', "rgb(64, 64, 64)")
     .style('pointer-events', 'none')
 
   // these are ususally empty since there is no data in ergast

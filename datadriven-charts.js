@@ -4,7 +4,21 @@ window.DataDriven.qualy = function(all_data) {
   var data = all_data.qdata
 
   var constructors = all_data.constructors
-  var conscolors =   ["#7f7f7f", "#d62728", "#5254a3", "#1f77b4", "#393b79", "#ff7f0e", "#222222", "#ffee11", "#0000aa", "#c7c7c7", "#0000ff", "#00ff00", "#ff0000"]
+  var conscolors =   ["#F00000", "#F0A400", "#C7C7C7", "#00A6D4", "#4A4A4A", "#8A8A8A", "#000A99", "#D9D900", "#616BFF", "#680AFF", "#FFFFFF", "#00ff00", "#ff0000"]
+
+  /*
+  "ferrari",
+  "force_india",
+  "haas",
+  "manor",
+  "mclaren",
+  "mercedes",
+  "red_bull",
+  "renault",
+  "sauber",
+  "toro_rosso",
+  "williams"
+  */
 
   var c = d3.conventions({
     parentSel: d3.select("#qualy"), 
@@ -137,6 +151,80 @@ window.DataDriven.laps = function(all_data) {
   var zoomed = false
   var config
 
+  var constructors = all_data.constructors
+  var conscolors =   [
+    "#F00000", 
+    "#F0A400", 
+    "#C7C7C7", 
+    "#00A6D4", 
+    "#4A4A4A", 
+    "#8A8A8A", 
+    "#000A99", 
+    "#D9D900", 
+    "#616BFF", 
+    "#680AFF", 
+    "#FFFFFF"
+  ]
+
+  // var conscolormap ={
+  //   "ferrari": "F00000",
+  //   "force_india": "F0A400",
+  //   "haas": "C7C7C7",
+  //   "manor": "00A6D4",
+  //   "mclaren": "4A4A4A",
+  //   "mercedes": "8A8A8A",
+  //   "red_bull": "000A99",
+  //   "renault": "D9D900",
+  //   "sauber": "616BFF",
+  //   "toro_rosso": "680AFF",
+  //   "williams": "FFFFFF",
+  // }
+
+  // var drivercolors = [
+  //   conscolormap.ferrari,
+  //   conscolormap.williams
+  //   conscolormap.mclaren
+  //   conscolormap.sauber
+  //   conscolormap.renault
+  //   conscolormap.haas
+  //   conscolormap.mercedes
+  //   conscolormap.manor
+  //   conscolormap.force_india
+  //   conscolormap.toro_rosso
+  //   conscolormap.sauber
+  //   conscolormap.williams
+  //   conscolormap.sauber
+  //   conscolormap.
+  // ]
+
+  // var drivers = [
+  //   "alonso",
+  //   "bottas",
+  //   "button",
+  //   "ericsson",
+  //   "grosjean",
+  //   "gutierrez",
+  //   "hamilton",
+  //   "haryanto",
+  //   "hulkenberg",
+  //   "kvyat",
+  //   "kevin_magnussen",
+  //   "massa",
+  //   "nasr",
+  //   "jolyon_palmer",
+  //   "perez",
+  //   "raikkonen",
+  //   "ricciardo",
+  //   "rosberg",
+  //   "sainz",
+  //   "vandoorne",
+  //   "max_verstappen",
+  //   "vettel",
+  //   "wehrlein"
+  // ]
+
+  // var dcolors = 
+
   function configureScales(data) {
       SCALES.x = d3.scale.linear()
           .domain([0, data.lap_count])
@@ -145,6 +233,9 @@ window.DataDriven.laps = function(all_data) {
           .domain([0, data.laps.length - 1])
           .range([config.margin.top, config.height - config.margin.bottom - config.margin.top]);
       SCALES.clr = d3.scale.category20();
+      // SCALES.clr = d3.scale.category10()
+      //   .domain(constructors)
+      //   .range(conscolors)
   }
 
   function processLapMarkers(data, key) {
@@ -267,7 +358,7 @@ window.DataDriven.laps = function(all_data) {
         return "" + valueLine(points) 
       })
       .style('stroke', function(d) {
-        return SCALES.clr(d.placing[0]);
+        return SCALES.clr(d.driver.driverId);
       })
       .on('mouseover', function(d) {
         highlight(vis, d.driver.driverId);

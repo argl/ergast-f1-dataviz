@@ -114,11 +114,16 @@ defmodule Data do
       [first_td | tds] = tds
       case first_td do
         {"td", _, [{"a", _, [driver_name]}]} -> 
-
           tires = Enum.map(tds, fn(td) -> 
-            {"td", _, [x]} = td
+            # code aroucn mssinf ultra soft letter...
+            x = case td do
+              {"td", _, [x]} -> x  
+              {"td", _, []} -> "UW"  
+            end
+            #{"td", _, [x]} = td
             x = Regex.replace(~r/ ?\(DNF\)/, x, "")
             x = Map.get(%{
+              "UW" => "US",
               "SW" => "SS",
               "W" => "S",
               "M" => "M",

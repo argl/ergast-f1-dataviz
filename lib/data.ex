@@ -30,6 +30,17 @@ defmodule Data do
     drivers = with_cached_file "dd-#{year}-#{round}-drivers.json", fn() -> get_drivers(year) end
     constructors = with_cached_file "dd-#{year}-constructors.json", fn() -> get_constructors(year) end
 
+    # change pitstop data here, cater for drive throughs and safety car through pits
+    pitstops = case File.read "dd-#{year}-#{round}-pitstops-correction.json" do
+      {:ok, content} ->
+        IO.puts "Integrating pitstop corrections"
+        #IO.inspect pitstops
+        corrections = Poison.Parser.parse! content
+        # pitstops |> Enum.filter invalid |> Enum.map_reduce renumber
+        pitstops
+      {:error, _} -> pitstops
+    end
+
     data_filename = "dd-f1-#{year}-#{round}.json"
     chart_data = DataConverter.convert_data(results, laps, pitstops, drivers)
 
@@ -42,7 +53,7 @@ defmodule Data do
   end
 
 
-  def get_strategy(drivers, pitstops, tire_data, results) do
+  def get_strategy(_drivers, pitstops, tire_data, results) do
     tire_data 
     # create a map of 
     # %{"wehrlein": [%{"tire": "S", "from_lap": 0}, %{"tire": "M","from_lap": 11}]}
@@ -76,7 +87,7 @@ defmodule Data do
     #|> IO.inspect
   end
 
-  def find_nth_pitstop_lap(driver, pitstops, 0) do
+  def find_nth_pitstop_lap(_driver, _pitstops, 0) do
     0
   end
   def find_nth_pitstop_lap(driver, pitstops, nth) do
@@ -93,7 +104,7 @@ defmodule Data do
     html = get_html(url)
     table = hd(Floki.find(html, "table.table1"))
     # IO.inspect table
-    {"table", _attributes, children} = table
+    {"table", _attributes, _children} = table
     # IO.inspect children
 
     Floki.find(html, "table.table1 tr") 
@@ -122,7 +133,7 @@ defmodule Data do
             end
             #{"td", _, [x]} = td
             x = Regex.replace(~r/ ?\(DNF\)/, x, "")
-            x = Map.get(%{
+            Map.get(%{
               "UW" => "US",
               "SW" => "SS",
               "W" => "S",
@@ -187,7 +198,7 @@ defmodule Data do
   def get_constructors(year) do
     url = "http://ergast.com/api/f1/#{year}/constructors.json"
     parsed = getJSON(url)
-    constructors = parsed["MRData"]["ConstructorTable"]["Constructors"] 
+    parsed["MRData"]["ConstructorTable"]["Constructors"] 
     |> Enum.map(&( &1["constructorId"] ))
   end
 

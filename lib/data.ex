@@ -34,11 +34,46 @@ defmodule Data do
     pitstops = case File.read "dd-#{year}-#{round}-pitstops-correction.json" do
       {:ok, content} ->
         IO.puts "Integrating pitstop corrections"
-        #IO.inspect pitstops
-        corrections = Poison.Parser.parse! content
-        # pitstops |> Enum.filter invalid |> Enum.map_reduce renumber
+        corrections = Poison.Parser.parse!(content)
+        invalid_pitstops = corrections["invalid_pitstops"]
         pitstops
-      {:error, _} -> pitstops
+        # filter by invalid pitstops (safety car drive-through or normal drive-through)
+        |> Enum.filter(fn(ps) ->
+          found = Enum.find invalid_pitstops, fn(cor) -> 
+            cor["driverId"] == ps["driverId"] && cor["lap"] == ps["lap"] 
+          end
+          case found do
+            nil -> true
+            _ -> false
+          end
+        end)
+        # renumber
+        |> Enum.sort(fn(ps1, ps2) -> 
+          case ps1["lap"] == ps2["lap"] do
+            true -> ps1["driverId"] < ps2["driverId"]
+            false -> 
+              {a, _} = Integer.parse(ps1["lap"])
+              {b, _} = Integer.parse(ps2["lap"])
+              a < b
+          end
+        end)
+        # |> IO.inspect
+        |> Enum.map_reduce(%{}, fn(ps, acc) -> 
+          acc = case acc[ps["driverId"]] do
+            nil -> 
+              put_in acc[ps["driverId"]], 1
+            _ ->
+              put_in acc[ps["driverId"]], acc[ps["driverId"]] + 1
+          end
+          ps = %{ps | "stop" => "#{acc[ps["driverId"]]}"}
+          {ps, acc}
+        end)
+        # |> (&("--------FormDataBoundary" <> &1)).()
+        |> (fn({result, _}) -> result end).()
+        # |> IO.inspect
+      {:error, _} -> 
+        IO.puts "No correction file"
+        pitstops
     end
 
     data_filename = "dd-f1-#{year}-#{round}.json"

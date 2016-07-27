@@ -24,7 +24,7 @@ defmodule DataConverter do
     }
   end
 
-  def get_laps(race_results, drivers, laps, pit_stops) do
+  def get_laps(race_results, _drivers, laps, pit_stops) do
     initialize_laps(race_results)
     |> set_laps_placing(race_results, laps)
     |> set_laps_pit_stops(pit_stops)
@@ -34,13 +34,12 @@ defmodule DataConverter do
     # Ergast marks the starting position of the drivers that did not participate in the race with a 0.
     driver_count = length(race_results)
     {ret, _} = Enum.map_reduce race_results, 0, fn(e, count_of_drivers_with_position_0_on_grid) ->
-      placing = case parse_int(e["grid"]) do
+      {placing, count_of_drivers_with_position_0_on_grid} = case parse_int(e["grid"]) do
         0 -> 
           pos = driver_count - count_of_drivers_with_position_0_on_grid
-          count_of_drivers_with_position_0_on_grid = count_of_drivers_with_position_0_on_grid + 1
-          pos
+          {pos, count_of_drivers_with_position_0_on_grid + 1}
         pos -> 
-          pos
+          {pos, count_of_drivers_with_position_0_on_grid}
       end
 
       accident = case Enum.find_index(@accident_statuses, &(&1 == e["status"])) do

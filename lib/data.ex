@@ -35,8 +35,9 @@ defmodule Data do
       {:ok, content} ->
         IO.puts "Integrating pitstop corrections"
         corrections = Poison.Parser.parse!(content)
-        invalid_pitstops = corrections["invalid_pitstops"]
-        pitstops
+        invalid_pitstops = corrections["invalid_pitstops"] || []
+        pitstops = pitstops ++ (corrections["additional_pitstops"] || [])
+
         # filter by invalid pitstops (safety car drive-through or normal drive-through)
         |> Enum.filter(fn(ps) ->
           found = Enum.find invalid_pitstops, fn(cor) -> 
@@ -57,7 +58,6 @@ defmodule Data do
               a < b
           end
         end)
-        # |> IO.inspect
         |> Enum.map_reduce(%{}, fn(ps, acc) -> 
           acc = case acc[ps["driverId"]] do
             nil -> 
@@ -126,7 +126,7 @@ defmodule Data do
     0
   end
   def find_nth_pitstop_lap(driver, pitstops, nth) do
-    ps = Enum.find(pitstops, fn(ps) -> 
+    ps = Enum.find(pitstops, fn(ps) ->
       Map.get(ps, "driverId") == driver && Map.get(ps, "stop") == "#{nth}" 
     end)
     {lap, _} = Integer.parse Map.get(ps, "lap")
@@ -135,7 +135,7 @@ defmodule Data do
 
   def get_tire_data(year, round) do
     url = "http://www.motorsport-total.com/f1/ergeb/#{year}/#{round |> String.rjust(2, ?0)}/75ts.shtml"
-    IO.inspect url
+    # IO.inspect url
     html = get_html(url)
     table = hd(Floki.find(html, "table.table1"))
     # IO.inspect table
@@ -206,7 +206,8 @@ defmodule Data do
             "Vandoorne" => "vandoorne",
             "Verstappen" => "max_verstappen",
             "Vettel" => "vettel",
-            "Wehrlein" => "wehrlein"
+            "Wehrlein" => "wehrlein",
+            "Ocon" => "ocon"
           }
           driver_name = Map.get(driver_map, driver_name, driver_name)
 

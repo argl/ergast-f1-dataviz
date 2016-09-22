@@ -1,0 +1,73 @@
+{
+  "invalid_pitstops": [
+    {
+      "lap": "1",
+      "driverId": "rosberg"
+    },
+    {
+      "lap": "1",
+      "driverId": "ricciardo"
+    },
+    {
+      "lap": "1",
+      "driverId": "hamilton"
+    },
+    {
+      "lap": "1",
+      "driverId": "vettel"
+    },
+    {
+      "lap": "1",
+      "driverId": "raikkonen"
+    },
+    {
+      "lap": "1",
+      "driverId": "alonso"
+    },
+    {
+      "lap": "1",
+      "driverId": "kvyat"
+    },
+    {
+      "lap": "1",
+      "driverId": "sainz"
+    },
+    {
+      "lap": "1",
+      "driverId": "nasr"
+    },
+    {
+      "lap": "1",
+      "driverId": "jolyon_palmer"
+    },
+    {
+      "lap": "1",
+      "driverId": "wehrlein"
+    },
+    {
+      "lap": "1",
+      "driverId": "ocon"
+    },
+    {
+      "lap": "1",
+      "driverId": "max_verstappen"
+    },
+    {
+      "lap": "1",
+      "driverId": "massa"
+    },
+    {
+      "lap": "1",
+      "driverId": "kevin_magnussen"
+    },
+    {
+      "lap": "1",
+      "driverId": "ericsson"
+    },
+    {
+      "lap": "1",
+      "driverId": "gutierrez"
+    }
+  ],
+  "additional_pitstops": []
+}

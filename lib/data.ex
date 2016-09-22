@@ -126,9 +126,11 @@ defmodule Data do
     0
   end
   def find_nth_pitstop_lap(driver, pitstops, nth) do
+    # IO.inspect([driver, nth])
     ps = Enum.find(pitstops, fn(ps) ->
       Map.get(ps, "driverId") == driver && Map.get(ps, "stop") == "#{nth}" 
     end)
+    # IO.inspect ps
     {lap, _} = Integer.parse Map.get(ps, "lap")
     lap
   end
